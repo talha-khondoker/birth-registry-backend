@@ -101,16 +101,16 @@ def run_checks(db: Session, d: ApplicationIn, fp: str, iris: str):
     return verdict, flags
 
 
-@app.post("/applications", status_code=201, summary="নাগরিকের সরাসরি আবেদন (মূল বৈশিষ্ট্য)")
+@app.post("/applications", status_code=201, summary="Submit a new birth registration application")
 def submit_application(data: ApplicationIn, db: Session = Depends(get_db)):
     if data.child_dob > date.today():
-        raise HTTPException(422, "জন্ম তারিখ ভবিষ্যতের হতে পারে না")
+        raise HTTPException(422, "Child date of birth cannot be in the future")
 
     fp, iris = sha(data.fingerprint_template), sha(data.iris_template)
     verdict, flags = run_checks(db, data, fp, iris)
 
     status = {"DUPLICATE": "REJECTED_DUPLICATE", "SUSPICIOUS": "FLAGGED", "CLEAR": "UNDER_REVIEW"}[verdict]
-    officer = None if verdict == "DUPLICATE" else random.choice(db.query(Officer).all())  # র‍্যান্ডম অ্যাসাইন
+    officer = None if verdict == "DUPLICATE" else random.choice(db.query(Officer).all()) 
 
     row = Application(
         tracking_id="TRK-" + secrets.token_hex(4).upper(),
